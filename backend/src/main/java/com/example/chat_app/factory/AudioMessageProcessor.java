@@ -1,0 +1,16 @@
+package com.example.chat_app.factory;
+
+import com.example.chat_app.exceptions.AppException;
+import com.example.chat_app.model.dto.SendMessageRequest;
+import com.example.chat_app.model.entity.Message;
+import org.springframework.http.HttpStatus;
+
+public class AudioMessageProcessor implements MessageProcessor{
+    @Override
+    public void process(SendMessageRequest request, Message messageEntity) {
+        if (request.mediaUrl() == null || request.mediaUrl().isBlank()) {
+            throw new AppException("Voice record URL is required", HttpStatus.BAD_REQUEST);
+        }
+        messageEntity.setMediaUrl(request.mediaUrl());
+    }
+}
