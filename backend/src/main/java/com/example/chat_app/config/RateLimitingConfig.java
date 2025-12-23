@@ -25,9 +25,8 @@ public class RateLimitingConfig {
     public ProxyManager<String> proxyManager() {
         return new CaffeineProxyManager<>(
                 Caffeine.newBuilder()
-                        .maximumSize(10_000) // حد أقصى 10,000 مستخدم
-                        .expireAfterWrite(Duration.ofMinutes(10)), // تنتهي البيانات بعد 10 دقائق
-                Duration.ofMinutes(1) // فترة التحديث
+                        .maximumSize(10_000), // حد أقصى 10,000 مستخدم
+                Duration.ofMinutes(1) // فترة الـ keepAfterRefill - المدة التي يتم الاحتفاظ بالـ bucket بعد آخر refill
         );
     }
 
