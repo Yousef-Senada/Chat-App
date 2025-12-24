@@ -5,9 +5,6 @@ import com.untitled.dto.response.UserResponse;
 
 import java.util.concurrent.CompletableFuture;
 
-/**
- * API endpoint class for user operations.
- */
 public class UsersApi {
 
   private final ApiClient client;
@@ -16,10 +13,6 @@ public class UsersApi {
     this.client = client;
   }
 
-  /**
-   * Gets the current user's profile.
-   * GET /api/users/profile
-   */
   public CompletableFuture<UserResponse> getProfile() {
     return client.get("/api/users/profile")
         .thenApply(UserResponse::fromJson);

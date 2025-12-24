@@ -24,10 +24,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-/**
- * Controller for the contacts view.
- * Displays list of contacts and allows starting chats.
- */
 public class ContactsController {
 
   @FXML
@@ -58,7 +54,6 @@ public class ContactsController {
   @FXML
   private Circle statusIndicator;
 
-  // Add Contact Form fields
   @FXML
   private VBox addContactForm;
   @FXML
@@ -79,25 +74,21 @@ public class ContactsController {
   public void initialize() {
     System.out.println("Contacts View Initialized");
 
-    // Get services
     contactService = ServiceLocator.getInstance().getContactService();
     chatService = ServiceLocator.getInstance().getChatService();
     contactStore = contactService.getStore();
 
-    // Bind loading indicator
     if (loadingIndicator != null) {
       loadingIndicator.visibleProperty().bind(contactStore.loadingProperty());
       loadingIndicator.managedProperty().bind(contactStore.loadingProperty());
     }
 
-    // Bind error label
     if (errorLabel != null) {
       errorLabel.textProperty().bind(contactStore.errorProperty());
       errorLabel.visibleProperty().bind(contactStore.errorProperty().isNotEmpty());
       errorLabel.managedProperty().bind(contactStore.errorProperty().isNotEmpty());
     }
 
-    // Listen to contact list changes
     contactStore.getContacts().addListener((ListChangeListener<ContactDisplayResponse>) change -> {
       updateContactList();
       updateContactCount();
@@ -105,7 +96,6 @@ public class ContactsController {
 
     setupSearchListener();
 
-    // Load contacts from API
     contactService.loadContacts();
   }
 
@@ -132,7 +122,6 @@ public class ContactsController {
       container.setStyle("-fx-cursor: hand; -fx-background-color: transparent;");
     });
 
-    // Avatar
     StackPane avatarContainer = new StackPane();
     Circle avatar = new Circle(22);
     avatar.setFill(Color.web(generateAvatarColor(contact.displayName())));
@@ -143,7 +132,6 @@ public class ContactsController {
 
     avatarContainer.getChildren().addAll(avatar, initials);
 
-    // Contact info
     VBox infoBox = new VBox(2);
     HBox.setHgrow(infoBox, Priority.ALWAYS);
 
@@ -158,7 +146,6 @@ public class ContactsController {
 
     infoBox.getChildren().addAll(nameLabel, usernameLabel);
 
-    // Delete button
     Button deleteBtn = new Button("✕");
     deleteBtn
         .setStyle("-fx-background-color: transparent; -fx-text-fill: #EF4444; -fx-cursor: hand; -fx-font-size: 14px;");
@@ -239,11 +226,8 @@ public class ContactsController {
     return colors[hash % colors.length];
   }
 
-  // ===== Add Contact Form Handlers =====
-
   @FXML
   private void onAddContactClick() {
-    // Show the add contact form
     addContactForm.setVisible(true);
     addContactForm.setManaged(true);
     clearAddContactForm();
@@ -251,7 +235,6 @@ public class ContactsController {
 
   @FXML
   private void onCancelAddContact() {
-    // Hide the add contact form
     addContactForm.setVisible(false);
     addContactForm.setManaged(false);
     clearAddContactForm();
@@ -262,7 +245,6 @@ public class ContactsController {
     String phoneNumber = phoneNumberField.getText().trim();
     String displayName = displayNameField.getText().trim();
 
-    // Validate input
     if (phoneNumber.isEmpty()) {
       showAddContactError("Please enter a phone number");
       return;
@@ -273,11 +255,9 @@ public class ContactsController {
       return;
     }
 
-    // Clear error and call service
     hideAddContactError();
     contactService.addContact(phoneNumber, displayName);
 
-    // Hide form after submission
     addContactForm.setVisible(false);
     addContactForm.setManaged(false);
     clearAddContactForm();
@@ -315,7 +295,6 @@ public class ContactsController {
   @FXML
   private void onStartChatClick() {
     if (selectedContact != null) {
-      // Create P2P chat with the selected contact
       chatService.createP2PChat(selectedContact.contactUserId());
       NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "Chats");
     }

@@ -13,10 +13,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
-/**
- * Controller for the settings view.
- * Displays and manages user profile settings.
- */
 public class SettingsController {
 
   @FXML
@@ -51,13 +47,11 @@ public class SettingsController {
   public void initialize() {
     System.out.println("Settings View Initialized");
 
-    // Get services from ServiceLocator
     authService = ServiceLocator.getInstance().getAuthService();
     authStore = ServiceLocator.getInstance().getAuthStore();
 
     loadUserProfile();
 
-    // Listen for user changes
     authStore.currentUserProperty().addListener((obs, oldUser, newUser) -> {
       if (newUser != null) {
         updateProfileDisplay(newUser);
@@ -70,9 +64,7 @@ public class SettingsController {
     if (currentUser != null) {
       updateProfileDisplay(currentUser);
     } else {
-      // Load profile if not already loaded
       authService.loadProfile();
-      // Set defaults while loading
       nameField.setText("Loading...");
       statusField.setText("Available");
       emailField.setText("");
@@ -82,10 +74,8 @@ public class SettingsController {
   private void updateProfileDisplay(UserResponse user) {
     nameField.setText(user.name() != null ? user.name() : "");
     statusField.setText("Available");
-    // Use username as email since API doesn't return email
     emailField.setText(user.username() != null ? user.username() : "");
 
-    // Generate avatar color from username
     String avatarColor = generateAvatarColor(user.username());
     profileAvatar.setFill(Color.web(avatarColor));
   }
@@ -94,7 +84,6 @@ public class SettingsController {
     if (username == null || username.isEmpty()) {
       return "#8B5CF6";
     }
-    // Generate a consistent color based on username
     String[] colors = { "#8B5CF6", "#3B82F6", "#22C55E", "#EF4444", "#F59E0B", "#EC4899", "#06B6D4", "#10B981" };
     int hash = Math.abs(username.hashCode());
     return colors[hash % colors.length];
@@ -105,8 +94,6 @@ public class SettingsController {
     String name = nameField.getText();
     String status = statusField.getText();
 
-    // Note: Profile update API not implemented in backend documentation
-    // Just show confirmation for now
     System.out.println("Profile saved: " + name + ", " + status);
     showSaveConfirmation();
   }
@@ -141,7 +128,6 @@ public class SettingsController {
 
   @FXML
   private void onLogoutClick() {
-    // Logout via AuthService
     authService.logout();
     NavigationManager.getInstance().navigateTo("views/login.fxml", "Login");
   }

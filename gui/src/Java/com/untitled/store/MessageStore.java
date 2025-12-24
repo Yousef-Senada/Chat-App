@@ -8,10 +8,6 @@ import javafx.collections.ObservableList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Observable store for message state.
- * Uses JavaFX properties for UI binding.
- */
 public class MessageStore {
 
   private final ObservableList<MessageDisplayDto> messages = FXCollections.observableArrayList();
@@ -22,12 +18,10 @@ public class MessageStore {
   private final BooleanProperty loading = new SimpleBooleanProperty(false);
   private final StringProperty error = new SimpleStringProperty();
 
-  // Observable list getter
   public ObservableList<MessageDisplayDto> getMessages() {
     return messages;
   }
 
-  // Property getters for binding
   public ObjectProperty<UUID> currentChatIdProperty() {
     return currentChatId;
   }
@@ -52,7 +46,6 @@ public class MessageStore {
     return error;
   }
 
-  // Value getters
   public UUID getCurrentChatId() {
     return currentChatId.get();
   }
@@ -77,7 +70,6 @@ public class MessageStore {
     return error.get();
   }
 
-  // Actions
   public void setMessages(List<MessageDisplayDto> newMessages, UUID chatId, int page, int total, boolean more) {
     currentChatId.set(chatId);
     currentPage.set(page);
@@ -85,16 +77,25 @@ public class MessageStore {
     hasMore.set(more);
 
     if (page == 0) {
-      // First page - replace all messages
       messages.clear();
     }
-    // Add messages to the end (older messages for pagination)
     messages.addAll(newMessages);
   }
 
   public void addMessage(MessageDisplayDto message) {
-    // Add new messages at the beginning (most recent first)
-    messages.add(0, message);
+    messages.add(message);
+  }
+
+  public void updateMessage(MessageDisplayDto updatedMessage) {
+    if (updatedMessage.messageId() == null) return;
+    
+    for (int i = 0; i < messages.size(); i++) {
+      if (messages.get(i).messageId() != null && 
+          messages.get(i).messageId().equals(updatedMessage.messageId())) {
+        messages.set(i, updatedMessage);
+        break;
+      }
+    }
   }
 
   public void updateMessage(UUID messageId, MessageDisplayDto updatedMessage) {
@@ -131,9 +132,6 @@ public class MessageStore {
     error.set(null);
   }
 
-  /**
-   * Checks if messages are for a different chat.
-   */
   public boolean isForDifferentChat(UUID chatId) {
     UUID current = currentChatId.get();
     return current == null || !current.equals(chatId);

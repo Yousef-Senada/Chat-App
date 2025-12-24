@@ -10,10 +10,6 @@ import com.untitled.util.ErrorHandler;
 
 import javafx.application.Platform;
 
-/**
- * Service class for authentication operations.
- * Orchestrates API calls and state updates.
- */
 public class AuthService {
 
   private final AuthApi authApi;
@@ -28,10 +24,6 @@ public class AuthService {
     this.tokenStorage = tokenStorage;
   }
 
-  /**
-   * Logs in a user with username and password.
-   * Updates AuthStore with result.
-   */
   public void login(String username, String password) {
     authStore.setLoading(true);
     authStore.clearError();
@@ -42,7 +34,6 @@ public class AuthService {
             tokenStorage.setToken(response.token());
             authStore.setToken(response.token());
             authStore.setLoading(false);
-            // Load user profile after successful login
             loadProfile();
           });
         })
@@ -56,10 +47,6 @@ public class AuthService {
         });
   }
 
-  /**
-   * Registers a new user.
-   * Updates AuthStore with result.
-   */
   public void register(String name, String username, String phoneNumber, String password) {
     authStore.setLoading(true);
     authStore.clearError();
@@ -70,7 +57,6 @@ public class AuthService {
             tokenStorage.setToken(response.token());
             authStore.setToken(response.token());
             authStore.setLoading(false);
-            // Load user profile after successful registration
             loadProfile();
           });
         })
@@ -84,9 +70,6 @@ public class AuthService {
         });
   }
 
-  /**
-   * Loads the current user's profile.
-   */
   public void loadProfile() {
     if (!authStore.hasToken()) {
       return;
@@ -100,7 +83,6 @@ public class AuthService {
         })
         .exceptionally(throwable -> {
           Platform.runLater(() -> {
-            // If profile load fails with 401, token is invalid
             if (throwable.getCause() instanceof ApiException apiEx) {
               if (apiEx.isUnauthorized()) {
                 logout();
@@ -111,23 +93,14 @@ public class AuthService {
         });
   }
 
-  /**
-   * Logs out the current user.
-   */
   public void logout() {
     authStore.logout();
   }
 
-  /**
-   * Checks if user is currently logged in.
-   */
   public boolean isLoggedIn() {
     return authStore.isLoggedIn();
   }
 
-  /**
-   * Gets the current user.
-   */
   public UserResponse getCurrentUser() {
     return authStore.getCurrentUser();
   }

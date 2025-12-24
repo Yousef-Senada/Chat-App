@@ -8,10 +8,6 @@ import javafx.collections.ObservableList;
 
 import java.util.List;
 
-/**
- * Observable store for chat state.
- * Uses JavaFX properties for UI binding.
- */
 public class ChatStore {
 
   private final ObservableList<ChatDisplayDto> chats = FXCollections.observableArrayList();
@@ -20,7 +16,6 @@ public class ChatStore {
   private final BooleanProperty loading = new SimpleBooleanProperty(false);
   private final StringProperty error = new SimpleStringProperty();
 
-  // Observable list getters
   public ObservableList<ChatDisplayDto> getChats() {
     return chats;
   }
@@ -29,7 +24,6 @@ public class ChatStore {
     return activeChatMembers;
   }
 
-  // Property getters for binding
   public ObjectProperty<ChatDisplayDto> activeChatProperty() {
     return activeChat;
   }
@@ -42,7 +36,6 @@ public class ChatStore {
     return error;
   }
 
-  // Value getters
   public ChatDisplayDto getActiveChat() {
     return activeChat.get();
   }
@@ -55,14 +48,12 @@ public class ChatStore {
     return error.get();
   }
 
-  // Actions
   public void setChats(List<ChatDisplayDto> newChats) {
     chats.clear();
     chats.addAll(newChats);
   }
 
   public void addChat(ChatDisplayDto chat) {
-    // Add to beginning of list (most recent first)
     chats.add(0, chat);
   }
 

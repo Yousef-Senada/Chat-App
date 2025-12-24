@@ -1,9 +1,5 @@
 package com.untitled.api;
 
-/**
- * Custom exception for API errors.
- * Contains HTTP status code and error message from the server.
- */
 public class ApiException extends RuntimeException {
 
     private final int statusCode;

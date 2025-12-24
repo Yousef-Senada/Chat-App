@@ -8,18 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Simple JSON mapper without external dependencies.
- * Handles basic JSON serialization/deserialization for the chat app DTOs.
- */
 public class JsonMapper {
 
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-  /**
-   * Converts an object to JSON string.
-   * Supports records, Maps, Lists, and primitive types.
-   */
   public static String toJson(Object obj) {
     if (obj == null) {
       return "null";
@@ -45,7 +37,6 @@ public class JsonMapper {
     if (obj.getClass().isRecord()) {
       return recordToJson(obj);
     }
-    // Fallback: treat as object with getter methods
     return objectToJson(obj);
   }
 
@@ -98,7 +89,6 @@ public class JsonMapper {
         sb.append(toJson(value));
         first = false;
       } catch (Exception e) {
-        // Skip this field
       }
     }
     sb.append("}");
@@ -123,7 +113,6 @@ public class JsonMapper {
           sb.append(toJson(value));
           first = false;
         } catch (Exception e) {
-          // Skip this field
         }
       }
     }
@@ -131,9 +120,6 @@ public class JsonMapper {
     return sb.toString();
   }
 
-  /**
-   * Parses a JSON string into a Map.
-   */
   public static Map<String, Object> parseJson(String json) {
     if (json == null || json.trim().isEmpty()) {
       return new HashMap<>();
@@ -145,25 +131,16 @@ public class JsonMapper {
     return parseObject(json, new int[] { 0 });
   }
 
-  /**
-   * Gets a string value from a JSON map.
-   */
   public static String getString(Map<String, Object> map, String key) {
     Object value = map.get(key);
     return value != null ? value.toString() : null;
   }
 
-  /**
-   * Gets a UUID value from a JSON map.
-   */
   public static UUID getUUID(Map<String, Object> map, String key) {
     String value = getString(map, key);
     return value != null ? UUID.fromString(value) : null;
   }
 
-  /**
-   * Gets a boolean value from a JSON map.
-   */
   public static boolean getBoolean(Map<String, Object> map, String key) {
     Object value = map.get(key);
     if (value instanceof Boolean) {
@@ -172,9 +149,6 @@ public class JsonMapper {
     return "true".equalsIgnoreCase(String.valueOf(value));
   }
 
-  /**
-   * Gets an integer value from a JSON map.
-   */
   public static int getInt(Map<String, Object> map, String key) {
     Object value = map.get(key);
     if (value instanceof Number) {
@@ -187,9 +161,6 @@ public class JsonMapper {
     }
   }
 
-  /**
-   * Gets a LocalDateTime value from a JSON map.
-   */
   public static LocalDateTime getDateTime(Map<String, Object> map, String key) {
     String value = getString(map, key);
     if (value == null)
@@ -197,7 +168,6 @@ public class JsonMapper {
     try {
       return LocalDateTime.parse(value, DATE_TIME_FORMATTER);
     } catch (Exception e) {
-      // Try ISO format as fallback
       try {
         return LocalDateTime.parse(value);
       } catch (Exception e2) {
@@ -206,9 +176,6 @@ public class JsonMapper {
     }
   }
 
-  /**
-   * Gets a list of maps from a JSON map.
-   */
   @SuppressWarnings("unchecked")
   public static List<Map<String, Object>> getList(Map<String, Object> map, String key) {
     Object value = map.get(key);
@@ -218,9 +185,6 @@ public class JsonMapper {
     return new ArrayList<>();
   }
 
-  /**
-   * Gets a nested map from a JSON map.
-   */
   @SuppressWarnings("unchecked")
   public static Map<String, Object> getMap(Map<String, Object> map, String key) {
     Object value = map.get(key);
@@ -230,10 +194,9 @@ public class JsonMapper {
     return new HashMap<>();
   }
 
-  // JSON Parser implementation
   private static Map<String, Object> parseObject(String json, int[] pos) {
     Map<String, Object> result = new HashMap<>();
-    pos[0]++; // skip '{'
+    pos[0]++;
     skipWhitespace(json, pos);
 
     while (pos[0] < json.length() && json.charAt(pos[0]) != '}') {
@@ -258,14 +221,14 @@ public class JsonMapper {
       }
     }
 
-    if (pos[0] < json.length())
-      pos[0]++; // skip '}'
+      if (pos[0] < json.length())
+        pos[0]++;
     return result;
   }
 
   private static List<Object> parseArray(String json, int[] pos) {
     List<Object> result = new ArrayList<>();
-    pos[0]++; // skip '['
+    pos[0]++;
     skipWhitespace(json, pos);
 
     while (pos[0] < json.length() && json.charAt(pos[0]) != ']') {
@@ -280,7 +243,7 @@ public class JsonMapper {
     }
 
     if (pos[0] < json.length())
-      pos[0]++; // skip ']'
+      pos[0]++;
     return result;
   }
 
@@ -314,7 +277,7 @@ public class JsonMapper {
   }
 
   private static String parseString(String json, int[] pos) {
-    pos[0]++; // skip opening quote
+    pos[0]++;
     StringBuilder sb = new StringBuilder();
 
     while (pos[0] < json.length()) {

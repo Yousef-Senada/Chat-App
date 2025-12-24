@@ -5,10 +5,6 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Response DTO for message display data.
- * GET /api/messages/chat/{chatId}
- */
 public record MessageDisplayDto(
     UUID messageId,
     SenderDto sender,
@@ -18,17 +14,11 @@ public record MessageDisplayDto(
     LocalDateTime timestamp,
     boolean isEdited,
     boolean isDeleted) {
-  /**
-   * Creates a MessageDisplayDto from a JSON string.
-   */
   public static MessageDisplayDto fromJson(String json) {
     Map<String, Object> map = JsonMapper.parseJson(json);
     return fromMap(map);
   }
 
-  /**
-   * Creates a MessageDisplayDto from a parsed JSON map.
-   */
   public static MessageDisplayDto fromMap(Map<String, Object> map) {
     UUID messageId = JsonMapper.getUUID(map, "messageId");
 
@@ -45,30 +35,18 @@ public record MessageDisplayDto(
     return new MessageDisplayDto(messageId, sender, messageType, content, mediaUrl, timestamp, isEdited, isDeleted);
   }
 
-  /**
-   * Checks if this is a text message.
-   */
   public boolean isText() {
     return "TEXT".equals(messageType);
   }
 
-  /**
-   * Checks if this is an image message.
-   */
   public boolean isImage() {
     return "IMAGE".equals(messageType);
   }
 
-  /**
-   * Checks if this is an audio message.
-   */
   public boolean isAudio() {
     return "AUDIO".equals(messageType);
   }
 
-  /**
-   * Gets the display content for this message.
-   */
   public String getDisplayContent() {
     if (isDeleted) {
       return "[Message deleted]";

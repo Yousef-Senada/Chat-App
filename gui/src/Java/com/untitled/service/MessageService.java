@@ -8,10 +8,7 @@ import javafx.application.Platform;
 
 import java.util.UUID;
 
-/**
- * Service class for message operations.
- * Orchestrates API calls and state updates.
- */
+
 public class MessageService {
 
   private static final int PAGE_SIZE = 20;
@@ -24,18 +21,11 @@ public class MessageService {
     this.messageStore = messageStore;
   }
 
-  /**
-   * Loads messages for a chat (first page).
-   */
   public void loadMessages(UUID chatId) {
     loadMessages(chatId, 0);
   }
 
-  /**
-   * Loads messages for a chat with specific page.
-   */
   public void loadMessages(UUID chatId, int page) {
-    // If loading a different chat, clear previous messages
     if (page == 0 || messageStore.isForDifferentChat(chatId)) {
       messageStore.clear();
     }
@@ -67,9 +57,6 @@ public class MessageService {
         });
   }
 
-  /**
-   * Loads more messages (next page) for the current chat.
-   */
   public void loadMoreMessages() {
     UUID chatId = messageStore.getCurrentChatId();
     if (chatId == null || !messageStore.hasMore() || messageStore.isLoading()) {
@@ -80,9 +67,6 @@ public class MessageService {
     loadMessages(chatId, nextPage);
   }
 
-  /**
-   * Sends a text message.
-   */
   public void sendTextMessage(UUID chatId, String content) {
     if (content == null || content.trim().isEmpty()) {
       return;
@@ -91,7 +75,6 @@ public class MessageService {
     messagesApi.sendTextMessage(chatId, content.trim())
         .thenAccept(response -> {
           Platform.runLater(() -> {
-            // Reload messages to get the new message with proper formatting
             loadMessages(chatId, 0);
             System.out.println("Message sent successfully");
           });
@@ -106,9 +89,6 @@ public class MessageService {
         });
   }
 
-  /**
-   * Sends an image message.
-   */
   public void sendImageMessage(UUID chatId, String caption, String mediaUrl) {
     messagesApi.sendImageMessage(chatId, caption, mediaUrl)
         .thenAccept(response -> {
@@ -125,9 +105,6 @@ public class MessageService {
         });
   }
 
-  /**
-   * Edits a message.
-   */
   public void editMessage(UUID messageId, String newContent) {
     messagesApi.editMessage(messageId, newContent)
         .thenAccept(response -> {
@@ -147,9 +124,6 @@ public class MessageService {
         });
   }
 
-  /**
-   * Deletes a message.
-   */
   public void deleteMessage(UUID messageId) {
     messagesApi.deleteMessage(messageId)
         .thenAccept(response -> {
@@ -166,16 +140,10 @@ public class MessageService {
         });
   }
 
-  /**
-   * Gets the message store for binding.
-   */
   public MessageStore getStore() {
     return messageStore;
   }
 
-  /**
-   * Clears all messages (when leaving chat view).
-   */
   public void clearMessages() {
     messageStore.clear();
   }

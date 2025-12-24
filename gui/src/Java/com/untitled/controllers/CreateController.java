@@ -32,10 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Controller for the create group view.
- * Allows creating new group chats.
- */
 public class CreateController {
 
   @FXML
@@ -66,29 +62,24 @@ public class CreateController {
   public void initialize() {
     System.out.println("Create Group View Initialized");
 
-    // Get services
     chatService = ServiceLocator.getInstance().getChatService();
     contactService = ServiceLocator.getInstance().getContactService();
     chatStore = chatService.getStore();
     contactStore = contactService.getStore();
 
-    // Bind loading indicator
     if (loadingIndicator != null) {
       loadingIndicator.visibleProperty().bind(chatStore.loadingProperty());
       loadingIndicator.managedProperty().bind(chatStore.loadingProperty());
     }
 
-    // Bind error label
     if (errorLabel != null) {
       errorLabel.textProperty().bind(chatStore.errorProperty());
       errorLabel.visibleProperty().bind(chatStore.errorProperty().isNotEmpty());
       errorLabel.managedProperty().bind(chatStore.errorProperty().isNotEmpty());
     }
 
-    // Load contacts to select members from
     contactService.loadContacts();
 
-    // Listen to contacts being loaded
     contactStore.getContacts().addListener((javafx.collections.ListChangeListener<ContactDisplayResponse>) change -> {
       loadMembersSelection();
     });
@@ -121,7 +112,6 @@ public class CreateController {
     container.setPadding(new Insets(8, 12, 8, 12));
     container.setStyle("-fx-background-color: #F9FAFB; -fx-background-radius: 8;");
 
-    // Checkbox
     CheckBox checkBox = new CheckBox();
     checkBox.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
       if (isSelected) {
@@ -131,7 +121,6 @@ public class CreateController {
       }
     });
 
-    // Avatar
     StackPane avatarContainer = new StackPane();
     Circle avatar = new Circle(18);
     avatar.setFill(Color.web(generateAvatarColor(contact.displayName())));
@@ -142,7 +131,6 @@ public class CreateController {
 
     avatarContainer.getChildren().addAll(avatar, initials);
 
-    // Name
     VBox infoBox = new VBox(2);
     HBox.setHgrow(infoBox, Priority.ALWAYS);
 
@@ -158,7 +146,6 @@ public class CreateController {
 
     container.getChildren().addAll(checkBox, avatarContainer, infoBox);
 
-    // Make entire row clickable
     container.setOnMouseClicked(e -> checkBox.setSelected(!checkBox.isSelected()));
     container.setStyle("-fx-cursor: hand; -fx-background-color: #F9FAFB; -fx-background-radius: 8;");
 
@@ -195,13 +182,11 @@ public class CreateController {
 
     chatStore.clearError();
 
-    // Create group chat via API
     List<UUID> memberIds = new ArrayList<>(selectedMembers);
     chatService.createGroupChat(groupName.trim(), null, memberIds);
 
     System.out.println("Creating group: " + groupName + " with " + memberIds.size() + " members");
 
-    // Navigate to dashboard
     NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "ChatApp - Dashboard");
   }
 }

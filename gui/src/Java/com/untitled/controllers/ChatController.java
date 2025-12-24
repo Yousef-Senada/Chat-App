@@ -38,10 +38,6 @@ import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-/**
- * Controller for the chat view.
- * Displays messages and allows sending new messages.
- */
 public class ChatController {
 
   @FXML
@@ -80,7 +76,6 @@ public class ChatController {
   @FXML
   private VBox attachmentButton;
 
-  // Group Members UI Fields
   @FXML
   private VBox groupMembersSection;
   @FXML
@@ -101,6 +96,7 @@ public class ChatController {
   private ChatStore chatStore;
   private MessageStore messageStore;
   private AuthStore authStore;
+  private com.untitled.service.WebSocketService webSocketService;
 
   private ChatDisplayDto currentChat;
   private UUID currentUserId;
@@ -112,44 +108,51 @@ public class ChatController {
   public void initialize() {
     System.out.println("Chat View Initialized");
 
-    // Get services and stores
     chatService = ServiceLocator.getInstance().getChatService();
     messageService = ServiceLocator.getInstance().getMessageService();
     chatStore = chatService.getStore();
     messageStore = messageService.getStore();
     authStore = ServiceLocator.getInstance().getAuthStore();
+    webSocketService = ServiceLocator.getInstance().getWebSocketService();
 
-    // Get current user ID
     UserResponse currentUser = authStore.getCurrentUser();
     if (currentUser != null) {
       currentUserId = currentUser.ID();
     }
 
-    // Get active chat
     currentChat = chatStore.getActiveChat();
 
-    // Bind loading indicator
     if (loadingIndicator != null) {
       loadingIndicator.visibleProperty().bind(messageStore.loadingProperty());
       loadingIndicator.managedProperty().bind(messageStore.loadingProperty());
     }
 
-    // Listen to message list changes
     messageStore.getMessages().addListener((ListChangeListener<MessageDisplayDto>) change -> {
       updateMessageList();
     });
 
-    // Listen to chat members changes
     chatStore.getActiveChatMembers().addListener((ListChangeListener<MemberDisplayDto>) change -> {
       updateMembersList();
     });
 
     if (currentChat != null) {
       loadChatData();
-      // Load messages from API
       messageService.loadMessages(currentChat.chatId());
 
-      // If it's a group, load members and show the section
+      if (webSocketService.isConnected()) {
+        webSocketService.subscribeToChat(currentChat.chatId());
+        System.out.println("Subscribed to WebSocket for chat: " + currentChat.chatId());
+      } else {
+        System.out.println("WebSocket not connected, attempting to connect...");
+        webSocketService.connect().thenRun(() -> {
+          webSocketService.subscribeToChat(currentChat.chatId());
+          System.out.println("WebSocket connected and subscribed to chat: " + currentChat.chatId());
+        }).exceptionally(error -> {
+          System.out.println("Failed to connect WebSocket: " + error.getMessage());
+          return null;
+        });
+      }
+
       if (currentChat.isGroup()) {
         showGroupMembersSection();
         chatService.loadChatMembers(currentChat.chatId());
@@ -166,12 +169,14 @@ public class ChatController {
     if (currentChat == null)
       return;
 
-    chatNameLabel.setText(currentChat.getDisplayName());
-    chatAvatar.setFill(Color.web(generateAvatarColor(currentChat.getDisplayName())));
-    avatarInitials.setText(getInitials(currentChat.getDisplayName()));
+    String displayName = getDisplayNameForChat(currentChat);
 
-    profileNameLabel.setText(currentChat.getDisplayName());
-    profileAvatar.setFill(Color.web(generateAvatarColor(currentChat.getDisplayName())));
+    chatNameLabel.setText(displayName);
+    chatAvatar.setFill(Color.web(generateAvatarColor(displayName)));
+    avatarInitials.setText(getInitials(displayName));
+
+    profileNameLabel.setText(displayName);
+    profileAvatar.setFill(Color.web(generateAvatarColor(displayName)));
 
     if (currentChat.isGroup()) {
       chatStatusLabel.setText(currentChat.members() != null ? currentChat.members().size() + " members" : "Group");
@@ -229,7 +234,6 @@ public class ChatController {
     container.setPadding(new Insets(8, 10, 8, 10));
     container.setStyle("-fx-background-color: #F9FAFB; -fx-background-radius: 8;");
 
-    // Avatar
     StackPane avatarContainer = new StackPane();
     Circle avatar = new Circle(16);
     avatar.setFill(Color.web(generateAvatarColor(member.name())));
@@ -240,7 +244,6 @@ public class ChatController {
 
     avatarContainer.getChildren().addAll(avatar, initials);
 
-    // Member info
     VBox infoBox = new VBox(1);
     HBox.setHgrow(infoBox, Priority.ALWAYS);
 
@@ -264,7 +267,6 @@ public class ChatController {
 
     container.getChildren().addAll(avatarContainer, infoBox);
 
-    // Remove button (don't show for current user or admins if not admin)
     boolean isCurrentUser = member.userId() != null && member.userId().equals(currentUserId);
     if (!isCurrentUser) {
       Button removeBtn = new Button("✕");
@@ -287,8 +289,6 @@ public class ChatController {
       chatService.removeMember(currentChat.chatId(), member.userId());
     }
   }
-
-  // ===== Add Member Form Handlers =====
 
   @FXML
   private void onAddMemberClick() {
@@ -336,7 +336,6 @@ public class ChatController {
       System.out.println("Adding member with ID: " + memberId);
       chatService.addMember(currentChat.chatId(), memberId);
 
-      // Hide the form
       onCancelAddMember();
     } catch (IllegalArgumentException e) {
       System.out.println("Invalid UUID format: " + memberIdStr);
@@ -384,7 +383,6 @@ public class ChatController {
       messageBox.setStyle("-fx-background-color: #F3F4F6; -fx-background-radius: 16 16 16 4;");
     }
 
-    // Sender name (for incoming messages in groups)
     if (!isOutgoing && currentChat != null && currentChat.isGroup() && message.sender() != null) {
       Label senderLabel = new Label(message.sender().name());
       senderLabel.setFont(Font.font("System", FontWeight.BOLD, 12));
@@ -392,14 +390,12 @@ public class ChatController {
       messageBox.getChildren().add(senderLabel);
     }
 
-    // Message content
     Label contentLabel = new Label(message.getDisplayContent());
     contentLabel.setWrapText(true);
     contentLabel.setFont(Font.font("System", 14));
     contentLabel.setTextFill(isOutgoing ? Color.WHITE : Color.web("#111827"));
     messageBox.getChildren().add(contentLabel);
 
-    // Timestamp
     HBox timeRow = new HBox(4);
     timeRow.setAlignment(isOutgoing ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
 
@@ -415,7 +411,6 @@ public class ChatController {
 
     messageBox.getChildren().add(timeRow);
 
-    // Avatar for incoming messages
     if (!isOutgoing && message.sender() != null) {
       Circle avatar = new Circle(16);
       avatar.setFill(Color.web(generateAvatarColor(message.sender().name())));
@@ -480,7 +475,6 @@ public class ChatController {
       String filePath = selectedFile.toURI().toString();
       String fileName = selectedFile.getName();
 
-      // Note: File upload not implemented - would need a file upload endpoint
       messageService.sendImageMessage(currentChat.chatId(), fileName, filePath);
     }
   }
@@ -489,7 +483,6 @@ public class ChatController {
   private void onSendVideo(MouseEvent event) {
     hideAttachmentPopup();
     event.consume();
-    // Video upload not implemented in API
     System.out.println("Video upload not implemented");
   }
 
@@ -497,8 +490,19 @@ public class ChatController {
   private void onSendFile(MouseEvent event) {
     hideAttachmentPopup();
     event.consume();
-    // File upload not implemented in API
     System.out.println("File upload not implemented");
+  }
+
+  private String getDisplayNameForChat(ChatDisplayDto chat) {
+    if (chat.isGroup()) {
+      return chat.getDisplayName();
+    }
+    if (chat.members() != null && !chat.members().isEmpty()) {
+      UUID otherUserId = chat.members().get(0).userId();
+      String fallbackName = chat.members().get(0).name();
+      return chatService.getDisplayNameForUser(otherUserId, fallbackName);
+    }
+    return chat.getDisplayName();
   }
 
   private String getInitials(String name) {
@@ -522,6 +526,10 @@ public class ChatController {
 
   @FXML
   private void onBackClick() {
+    if (webSocketService != null) {
+      webSocketService.unsubscribeFromChat();
+    }
+
     messageService.clearMessages();
     chatService.setActiveChat(null);
     NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "Chats");
@@ -539,6 +547,10 @@ public class ChatController {
 
   @FXML
   private void onLogoutClick() {
+    if (webSocketService != null) {
+      webSocketService.disconnect();
+    }
+
     ServiceLocator.reset();
     NavigationManager.getInstance().navigateTo("views/login.fxml", "Login");
   }

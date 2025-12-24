@@ -5,10 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Generic paginated response wrapper.
- * Used for endpoints that return Page<T>.
- */
 public record PageResponse<T>(
     List<T> content,
     int pageNumber,
@@ -17,10 +13,6 @@ public record PageResponse<T>(
     long totalElements,
     boolean first,
     boolean last) {
-  /**
-   * Creates a PageResponse from a JSON string with a mapper function for content
-   * items.
-   */
   public static <T> PageResponse<T> fromJson(String json, java.util.function.Function<Map<String, Object>, T> mapper) {
     Map<String, Object> map = JsonMapper.parseJson(json);
 
@@ -30,7 +22,7 @@ public record PageResponse<T>(
       content.add(mapper.apply(item));
     }
 
-    int pageNumber = JsonMapper.getInt(map, "number"); // Spring uses "number" not "pageNumber"
+    int pageNumber = JsonMapper.getInt(map, "number");
     int pageSize = JsonMapper.getInt(map, "size");
     int totalPages = JsonMapper.getInt(map, "totalPages");
     long totalElements = JsonMapper.getInt(map, "totalElements");
@@ -40,9 +32,6 @@ public record PageResponse<T>(
     return new PageResponse<>(content, pageNumber, pageSize, totalPages, totalElements, first, last);
   }
 
-  /**
-   * Checks if there are more pages after this one.
-   */
   public boolean hasMore() {
     return !last;
   }

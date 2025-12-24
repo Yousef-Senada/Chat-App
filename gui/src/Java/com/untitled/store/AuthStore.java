@@ -4,10 +4,6 @@ import com.untitled.api.TokenStorage;
 import com.untitled.dto.response.UserResponse;
 import javafx.beans.property.*;
 
-/**
- * Observable store for authentication state.
- * Uses JavaFX properties for UI binding.
- */
 public class AuthStore {
 
   private final ObjectProperty<UserResponse> currentUser = new SimpleObjectProperty<>();
@@ -19,11 +15,9 @@ public class AuthStore {
 
   public AuthStore(TokenStorage tokenStorage) {
     this.tokenStorage = tokenStorage;
-    // Initialize loggedIn based on existing token
     this.loggedIn.set(tokenStorage.hasToken());
   }
 
-  // Property getters for binding
   public ObjectProperty<UserResponse> currentUserProperty() {
     return currentUser;
   }
@@ -40,7 +34,6 @@ public class AuthStore {
     return error;
   }
 
-  // Value getters
   public UserResponse getCurrentUser() {
     return currentUser.get();
   }
@@ -57,7 +50,6 @@ public class AuthStore {
     return error.get();
   }
 
-  // Actions
   public void setCurrentUser(UserResponse user) {
     currentUser.set(user);
     loggedIn.set(user != null);
@@ -87,9 +79,6 @@ public class AuthStore {
     error.set(null);
   }
 
-  /**
-   * Checks if there's an existing valid token.
-   */
   public boolean hasToken() {
     return tokenStorage.hasToken();
   }

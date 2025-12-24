@@ -6,6 +6,8 @@ import com.untitled.service.ServiceLocator;
 import com.untitled.store.ChatStore;
 import com.untitled.NavigationManager;
 
+import java.util.UUID;
+
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -24,10 +26,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-/**
- * Controller for the dashboard view.
- * Displays list of chats and allows navigation to other sections.
- */
 public class DashboardController {
 
   @FXML
@@ -58,32 +56,37 @@ public class DashboardController {
   public void initialize() {
     System.out.println("Dashboard View Initialized");
 
-    // Get services
     chatService = ServiceLocator.getInstance().getChatService();
     chatStore = chatService.getStore();
 
-    // Bind loading indicator
     if (loadingIndicator != null) {
       loadingIndicator.visibleProperty().bind(chatStore.loadingProperty());
       loadingIndicator.managedProperty().bind(chatStore.loadingProperty());
     }
 
-    // Bind error label
     if (errorLabel != null) {
       errorLabel.textProperty().bind(chatStore.errorProperty());
       errorLabel.visibleProperty().bind(chatStore.errorProperty().isNotEmpty());
       errorLabel.managedProperty().bind(chatStore.errorProperty().isNotEmpty());
     }
 
-    // Listen to chat list changes
     chatStore.getChats().addListener((ListChangeListener<ChatDisplayDto>) change -> {
       updateChatList();
     });
 
-    // Setup search
     setupSearchListener();
 
-    // Load chats from API
+    ServiceLocator.getInstance().getContactService().loadContacts();
+    
+    new Thread(() -> {
+      try {
+        Thread.sleep(500);
+        chatService.updateContactNamesCache();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }).start();
+    
     chatService.loadChats();
   }
 
@@ -114,25 +117,25 @@ public class DashboardController {
       }
     });
 
-    // Avatar
+    String displayName = getDisplayNameForChat(chat);
+
     StackPane avatarContainer = new StackPane();
     Circle avatar = new Circle(24);
-    avatar.setFill(Color.web(generateAvatarColor(chat.getDisplayName())));
+    avatar.setFill(Color.web(generateAvatarColor(displayName)));
 
-    Label initials = new Label(getInitials(chat.getDisplayName()));
+    Label initials = new Label(getInitials(displayName));
     initials.setTextFill(Color.WHITE);
     initials.setFont(Font.font("System", FontWeight.BOLD, 14));
 
     avatarContainer.getChildren().addAll(avatar, initials);
 
-    // Chat info
     VBox infoBox = new VBox(4);
     HBox.setHgrow(infoBox, Priority.ALWAYS);
 
     HBox nameRow = new HBox();
     nameRow.setAlignment(Pos.CENTER_LEFT);
 
-    Label nameLabel = new Label(chat.getDisplayName());
+    Label nameLabel = new Label(displayName);
     nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
     nameLabel.setTextFill(Color.web("#111827"));
 
@@ -147,7 +150,6 @@ public class DashboardController {
     HBox.setHgrow(spacer, Priority.ALWAYS);
     nameRow.getChildren().add(spacer);
 
-    // Members count for groups
     if (chat.isGroup() && chat.members() != null) {
       Label membersLabel = new Label(chat.members().size() + " members");
       membersLabel.setFont(Font.font("System", 11));
@@ -155,7 +157,6 @@ public class DashboardController {
       nameRow.getChildren().add(membersLabel);
     }
 
-    // Subtitle (member names or chat type)
     HBox messageRow = new HBox();
     messageRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -173,6 +174,18 @@ public class DashboardController {
     container.setOnMouseClicked(e -> openChat(chat));
 
     return container;
+  }
+
+  private String getDisplayNameForChat(ChatDisplayDto chat) {
+    if (chat.isGroup()) {
+      return chat.getDisplayName();
+    }
+    if (chat.members() != null && !chat.members().isEmpty()) {
+      UUID otherUserId = chat.members().get(0).userId();
+      String fallbackName = chat.members().get(0).name();
+      return chatService.getDisplayNameForUser(otherUserId, fallbackName);
+    }
+    return chat.getDisplayName();
   }
 
   private String getSubtitle(ChatDisplayDto chat) {
@@ -226,8 +239,9 @@ public class DashboardController {
     chatListContainer.getChildren().clear();
 
     for (ChatDisplayDto chat : chatStore.getChats()) {
+      String displayName = getDisplayNameForChat(chat);
       if (query == null || query.isEmpty() ||
-          chat.getDisplayName().toLowerCase().contains(query.toLowerCase())) {
+          displayName.toLowerCase().contains(query.toLowerCase())) {
         HBox chatItem = createChatListItem(chat);
         chatListContainer.getChildren().add(chatItem);
       }
@@ -261,6 +275,8 @@ public class DashboardController {
 
   @FXML
   private void onLogoutClick() {
+    ServiceLocator.getInstance().getWebSocketService().disconnect();
+    
     ServiceLocator.reset();
     NavigationManager.getInstance().navigateTo("views/login.fxml", "Login");
   }

@@ -15,10 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.logging.Logger;
 
-/**
- * Central HTTP client for all API calls.
- * Uses java.net.http.HttpClient introduced in Java 11.
- */
 public class ApiClient {
 
   private static final Logger LOGGER = Logger.getLogger(ApiClient.class.getName());
@@ -33,9 +29,6 @@ public class ApiClient {
         .build();
   }
 
-  /**
-   * Performs a GET request.
-   */
   public CompletableFuture<String> get(String path) {
     HttpRequest request = buildRequest(path)
         .GET()
@@ -43,9 +36,6 @@ public class ApiClient {
     return sendAsync(request);
   }
 
-  /**
-   * Performs a POST request with a JSON body.
-   */
   public CompletableFuture<String> post(String path, Object body) {
     String jsonBody = JsonMapper.toJson(body);
     LOGGER.fine("POST body: " + jsonBody);
@@ -55,9 +45,6 @@ public class ApiClient {
     return sendAsync(request);
   }
 
-  /**
-   * Performs a PATCH request with a JSON body.
-   */
   public CompletableFuture<String> patch(String path, Object body) {
     String jsonBody = JsonMapper.toJson(body);
     LOGGER.fine("PATCH body: " + jsonBody);
@@ -67,9 +54,6 @@ public class ApiClient {
     return sendAsync(request);
   }
 
-  /**
-   * Performs a DELETE request.
-   */
   public CompletableFuture<String> delete(String path) {
     HttpRequest request = buildRequest(path)
         .DELETE()
@@ -77,9 +61,6 @@ public class ApiClient {
     return sendAsync(request);
   }
 
-  /**
-   * Performs a DELETE request with a JSON body.
-   */
   public CompletableFuture<String> deleteWithBody(String path, Object body) {
     String jsonBody = JsonMapper.toJson(body);
     LOGGER.fine("DELETE body: " + jsonBody);
@@ -124,15 +105,12 @@ public class ApiClient {
           return body;
         })
         .exceptionally(ex -> {
-          // Unwrap CompletionException
           Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
 
-          // If it's already an ApiException, just rethrow
           if (cause instanceof ApiException) {
             throw (ApiException) cause;
           }
 
-          // Handle network errors
           if (cause instanceof ConnectException) {
             LOGGER.severe("Connection refused - is the server running? " + request.uri());
             throw new ApiException(0, "Cannot connect to server. Please check if the server is running.");
@@ -146,7 +124,6 @@ public class ApiClient {
             throw new ApiException(0, "Network error. Please check your connection.");
           }
 
-          // Unknown error
           LOGGER.severe("Unexpected error for " + request.uri() + ": " + cause);
           throw new ApiException(0, "An unexpected error occurred: " + cause.getMessage());
         });
@@ -168,7 +145,6 @@ public class ApiClient {
         return error;
       }
     } catch (Exception e) {
-      // JSON parsing failed, use body as message
       LOGGER.fine("Could not parse error body as JSON: " + e.getMessage());
     }
 

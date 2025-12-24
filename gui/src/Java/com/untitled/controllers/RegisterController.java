@@ -12,10 +12,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 
-/**
- * Controller for the registration view.
- * Handles new user registration via the AuthService.
- */
 public class RegisterController {
 
   @FXML
@@ -44,31 +40,24 @@ public class RegisterController {
   public void initialize() {
     System.out.println("Register View Initialized");
 
-    // Get services from ServiceLocator
     authService = ServiceLocator.getInstance().getAuthService();
     authStore = ServiceLocator.getInstance().getAuthStore();
 
-    // Bind loading indicator visibility to loading state
     if (loadingIndicator != null) {
       loadingIndicator.visibleProperty().bind(authStore.loadingProperty());
       loadingIndicator.managedProperty().bind(authStore.loadingProperty());
     }
 
-    // Bind register button disable state to loading
     if (registerBtn != null) {
       registerBtn.disableProperty().bind(authStore.loadingProperty());
     }
 
-    // Bind error label to error state
     if (errorLabel != null) {
       errorLabel.textProperty().bind(authStore.errorProperty());
       errorLabel.visibleProperty().bind(authStore.errorProperty().isNotEmpty());
       errorLabel.managedProperty().bind(authStore.errorProperty().isNotEmpty());
     }
 
-    // Listen for user profile being set after successful registration
-    // We use currentUserProperty because loggedInProperty might already be true
-    // from a previous session
     authStore.currentUserProperty().addListener((obs, oldUser, newUser) -> {
       if (newUser != null && !authStore.isLoading()) {
         System.out.println("User profile loaded after registration, navigating to Dashboard");
@@ -76,7 +65,6 @@ public class RegisterController {
       }
     });
 
-    // Clear any previous errors when view loads
     authStore.clearError();
   }
 
@@ -88,7 +76,6 @@ public class RegisterController {
     String password = passwordField != null ? passwordField.getText() : "";
     String confirmPassword = confirmPasswordField != null ? confirmPasswordField.getText() : "";
 
-    // Validate input
     if (name.isEmpty()) {
       authStore.setError("Please enter your name");
       return;
@@ -124,7 +111,6 @@ public class RegisterController {
       return;
     }
 
-    // Clear previous error and attempt registration
     authStore.clearError();
     authService.register(name, username, phone, password);
   }

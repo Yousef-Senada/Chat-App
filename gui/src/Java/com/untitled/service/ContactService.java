@@ -9,10 +9,6 @@ import javafx.application.Platform;
 
 import java.util.UUID;
 
-/**
- * Service class for contact operations.
- * Orchestrates API calls and state updates.
- */
 public class ContactService {
 
   private final ContactsApi contactsApi;
@@ -23,9 +19,6 @@ public class ContactService {
     this.contactStore = contactStore;
   }
 
-  /**
-   * Loads all contacts for the current user.
-   */
   public void loadContacts() {
     contactStore.setLoading(true);
     contactStore.clearError();
@@ -49,9 +42,6 @@ public class ContactService {
         });
   }
 
-  /**
-   * Adds a new contact.
-   */
   public void addContact(String phoneNumber, String displayName) {
     contactStore.setLoading(true);
     contactStore.clearError();
@@ -60,7 +50,6 @@ public class ContactService {
         .thenAccept(response -> {
           Platform.runLater(() -> {
             contactStore.setLoading(false);
-            // Reload contacts to get the updated list
             loadContacts();
             System.out.println("Contact added: " + response);
           });
@@ -75,9 +64,6 @@ public class ContactService {
         });
   }
 
-  /**
-   * Deletes a contact.
-   */
   public void deleteContact(UUID contactUserId) {
     contactStore.setLoading(true);
 
@@ -98,9 +84,6 @@ public class ContactService {
         });
   }
 
-  /**
-   * Finds a user by phone number.
-   */
   public void findByPhone(String phone, java.util.function.Consumer<ContactMatchResponse> onSuccess) {
     contactsApi.findByPhone(phone)
         .thenAccept(contact -> {
@@ -119,9 +102,6 @@ public class ContactService {
         });
   }
 
-  /**
-   * Gets the contact store for binding.
-   */
   public ContactStore getStore() {
     return contactStore;
   }

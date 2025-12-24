@@ -12,10 +12,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 
-/**
- * Controller for the login view.
- * Handles user authentication via the AuthService.
- */
 public class LoginController {
 
   @FXML
@@ -40,44 +36,47 @@ public class LoginController {
   public void initialize() {
     System.out.println("Login View Initialized");
 
-    // Get services from ServiceLocator
     authService = ServiceLocator.getInstance().getAuthService();
     authStore = ServiceLocator.getInstance().getAuthStore();
 
-    // Check if already logged in
     if (authStore.isLoggedIn() && authStore.getCurrentUser() != null) {
       System.out.println("User already logged in, navigating to Dashboard");
       NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "ChatApp - Dashboard");
       return;
     }
 
-    // Bind loading indicator visibility to loading state
     if (loadingIndicator != null) {
       loadingIndicator.visibleProperty().bind(authStore.loadingProperty());
       loadingIndicator.managedProperty().bind(authStore.loadingProperty());
     }
 
-    // Bind login button disable state to loading
     if (loginBtn != null) {
       loginBtn.disableProperty().bind(authStore.loadingProperty());
     }
 
-    // Bind error label to error state
     if (errorLabel != null) {
       errorLabel.textProperty().bind(authStore.errorProperty());
       errorLabel.visibleProperty().bind(authStore.errorProperty().isNotEmpty());
       errorLabel.managedProperty().bind(authStore.errorProperty().isNotEmpty());
     }
 
-    // Listen for successful login (when user profile is loaded)
     authStore.currentUserProperty().addListener((obs, oldUser, newUser) -> {
       if (newUser != null && !authStore.isLoading()) {
-        System.out.println("User logged in successfully, navigating to Dashboard");
-        NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "ChatApp - Dashboard");
+        System.out.println("User logged in successfully, connecting WebSocket...");
+
+        ServiceLocator.getInstance().getWebSocketService().connect()
+            .thenRun(() -> {
+              System.out.println("WebSocket connected successfully");
+              NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "ChatApp - Dashboard");
+            })
+            .exceptionally(error -> {
+              System.out.println("WebSocket connection failed: " + error.getMessage());
+              NavigationManager.getInstance().navigateTo("views/Dashboard.fxml", "ChatApp - Dashboard");
+              return null;
+            });
       }
     });
 
-    // Clear any previous errors when view loads
     authStore.clearError();
   }
 
@@ -86,7 +85,6 @@ public class LoginController {
     String username = usernameField != null ? usernameField.getText().trim() : "";
     String password = passwordField != null ? passwordField.getText() : "";
 
-    // Validate input
     if (username.isEmpty()) {
       authStore.setError("Please enter your username");
       return;
@@ -97,7 +95,6 @@ public class LoginController {
       return;
     }
 
-    // Clear previous error and attempt login
     authStore.clearError();
     authService.login(username, password);
   }

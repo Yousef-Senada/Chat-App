@@ -6,9 +6,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.prefs.Preferences;
 
-/**
- * Manages JWT token persistence using Java Preferences API with file backup.
- */
 public class TokenStorage {
 
   private static final String TOKEN_KEY = "jwt_token";
@@ -40,7 +37,6 @@ public class TokenStorage {
     try {
       Files.deleteIfExists(tokenFilePath);
     } catch (IOException ignored) {
-      // Ignore deletion errors
     }
   }
 
@@ -49,15 +45,12 @@ public class TokenStorage {
   }
 
   private void loadToken() {
-    // Try preferences first
     this.token = prefs.get(TOKEN_KEY, null);
 
-    // Fallback to file if preferences is empty
     if (token == null && Files.exists(tokenFilePath)) {
       try {
         this.token = Files.readString(tokenFilePath).trim();
       } catch (IOException ignored) {
-        // Ignore read errors
       }
     }
   }
@@ -69,7 +62,6 @@ public class TokenStorage {
         Files.createDirectories(tokenFilePath.getParent());
         Files.writeString(tokenFilePath, token);
       } catch (IOException ignored) {
-        // Ignore write errors, preferences is the primary storage
       }
     }
   }
